@@ -7,8 +7,20 @@ services:
       target: dev
     ports:
       - "3000:3000"
+    links:
+      - db
     volumes:
       - .:/app
     env_file:
       - .env
       - .env.local
+  
+  db:
+    container_name: db
+    image: postgres:15.7-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - .:/var/db
+    env_file:
+      - .env
