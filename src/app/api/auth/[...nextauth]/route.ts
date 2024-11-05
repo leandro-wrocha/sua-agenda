@@ -1,3 +1,4 @@
+import { storeUserUseCase } from '@/database';
 import { googleClientId, googleClientSecret } from '@/env';
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import Google from 'next-auth/providers/google';
@@ -21,29 +22,40 @@ export const nextAuthOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      console.log(user, account, profile, email, credentials);
+    async signIn({ user, account, profile }) {
+      if (account && profile && user) {
+        if (!profile.email_verified) {
+          return false;
+        }
 
-      return true
-    },
-    async redirect({ url, baseUrl }) {
-      return baseUrl
-    },
-    async session({ session, token, user }) {
-      return session
+        const createUserOrReturn = await storeUserUseCase.execute({
+          firstName: profile.given_name,
+          lastName: profile.family_name,
+          email: user.email ?? '',
+          avatar: user.image ?? '',
+          refreshToken: account.refresh_token ?? '',
+          accessToken: account.refresh_token ?? '',
+          emailVerified: new Date()
+        });
+
+        console.log(createUserOrReturn);
+
+        if (!createUserOrReturn) return false;
+
+        return true;
+      }
+
+      return false;
     },
     async jwt({ token, user, account, profile, isNewUser }) {
+      console.log('token', token);
       return token
+    },
+    async session({ session }) {
+      console.log('session', session);
+      return session
     }
   },
-  events: {
-    async signIn(message) { /* on successful sign in */ },
-    async signOut(message) { /* on signout */ },
-    async createUser(message) { /* user created */ },
-    async updateUser(message) { /* user updated - e.g. their email was verified */ },
-    async linkAccount(message) { /* account (e.g. Twitter) linked to a user */ },
-    async session(message) { /* session is active */ },
-  }
 }
 
 const handler = NextAuth(nextAuthOptions);
