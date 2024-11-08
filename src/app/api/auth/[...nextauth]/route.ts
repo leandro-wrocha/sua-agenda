@@ -23,6 +23,7 @@ export const nextAuthOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log(user, account, profile);
       if (account && profile && user) {
         if (!profile.email_verified) {
           return false;

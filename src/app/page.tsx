@@ -1,13 +1,22 @@
-'use client'
+'use client';
 
-import { signIn, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status == 'authenticated') {
+      router.push('/register');
+    } else if (status == 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status]);
 
   return (
-    <div className="h-full flex flex-col justify-center items-center">
-      <button onClick={() => signIn('google')}>login with google</button>
-      <button onClick={() => signOut()}>logout</button>
-    </div>
+    <div></div>
   );
 }

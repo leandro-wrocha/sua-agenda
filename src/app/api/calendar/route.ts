@@ -3,28 +3,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { calendar, auth as oauth } from '@googleapis/calendar';
 
 import { googleClientId, googleClientSecret } from "@/env";
+import { prisma } from "@/config/database";
 
-export const GET = async (request: NextRequest) => {
-  const auth = new oauth.OAuth2({
-    clientId: googleClientId,
-    clientSecret: googleClientSecret
-  });
-
+async function retornaToken () {
+  const auth = new oauth.OAuth2({ clientId: googleClientId, clientSecret: googleClientSecret });
   auth.setCredentials({
-    refresh_token: '1//0hzUh2-iLnSTiCgYIARAAGBESNwF-L9IrrNbevRKVYuDAcPRhRVkrt7GY8ae8PLa6y4XS2-e3L17HtkxaGEf3bGbwBVlylZoZI-I'
+    refresh_token: '1//0hoRTFWmnPpJ2CgYIARAAGBESNwF-L9IrJnwLX0PSLNLvHqcUL55Oq5Z0UlBWgz4zN7rlqg__5QCql4GpaT23ymR1W4JPW6BwSho'
   });
+
   if (auth.transporter.defaults) {
     auth.transporter.defaults.errorRedactor = false;
   }
 
-  try {
-    const { token } = await auth.getAccessToken();
-    
+  const { token } = await auth.getAccessToken();  
 
-    return NextResponse.json({ access_token: token }, { status: 200 });
-  
+  return token;
+}
 
-  } catch(error) {
-    return NextResponse.json({ error }, { status: 200 });
-  }
+export const GET = async (request: NextRequest) => {}
+
+export const POST = async (request: NextRequest) => {
+  const token = await retornaToken();
+
+  if (!token) return NextResponse.json({ msg: '' }, { status: 400 });
+
+  const { email } = await request.json();
+
+  await calendar('v3').calendars.insert({
+    oauth_token: token,
+    requestBody: {
+      
+    }
+  });
+
+  const calendarList = await calendar('v3').calendarList.list({
+    oauth_token: token
+  });
+
+  return NextResponse.json({ calendarList }, { status: 200 });
 }
